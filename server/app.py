@@ -1,41 +1,23 @@
 """DIYA's local API server.
 
-Loads a quantized GGUF model with llama-cpp-python and exposes it over
-HTTP. Runs entirely offline once the model file is present locally.
+Wires the Mediator, Memory, and ModelRuntime together and exposes them
+over HTTP. Runs entirely offline once agent models are downloaded per
+agents/registry.yaml.
 """
-import uuid
-from contextlib import asynccontextmanager
-
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import config
+from mediator import Mediator
+from memory import Memory
+from model_runtime import ModelRuntime
 
-_llm = None
-_conversations: dict[str, list[dict]] = {}
+model_runtime = ModelRuntime()
+memory = Memory()
+mediator = Mediator(model_runtime, memory)
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global _llm
-    try:
-        from llama_cpp import Llama
-
-        _llm = Llama(
-            model_path=config.MODEL_PATH,
-            n_ctx=config.CONTEXT_SIZE,
-            n_threads=config.THREADS,
-            verbose=False,
-        )
-    except (ImportError, ValueError, FileNotFoundError) as e:
-        print(f"[DIYA] model not loaded ({e}) - /chat will 503 until one is set up")
-        _llm = None
-    yield
-    _llm = None
-
-
-app = FastAPI(title="DIYA", lifespan=lifespan)
+app = FastAPI(title="DIYA")
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,26 +40,34 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     session_id: str
+    agent: str
+    governance: dict | None = None
+
+
+class FactRequest(BaseModel):
+    fact: str
+    source: str
+    source_detail: str = ""
+    confidence: str = "medium"
+    refresh_by: float | None = None
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_loaded": _llm is not None}
+    return {"status": "ok", "agents": model_runtime.status()}
 
 
 @app.post("/chat", response_model=ChatResponse, dependencies=[Depends(require_api_key)])
 def chat(req: ChatRequest):
-    if _llm is None:
-        raise HTTPException(status_code=503, detail="model not loaded yet")
+    return mediator.handle(req.message, req.session_id)
 
-    session_id = req.session_id or str(uuid.uuid4())
-    history = _conversations.setdefault(
-        session_id, [{"role": "system", "content": config.SYSTEM_PROMPT}]
-    )
-    history.append({"role": "user", "content": req.message})
 
-    result = _llm.create_chat_completion(messages=history)
-    reply = result["choices"][0]["message"]["content"]
-    history.append({"role": "assistant", "content": reply})
+@app.get("/memory", dependencies=[Depends(require_api_key)])
+def query_memory(q: str, limit: int = 10):
+    return memory.query(q, limit)
 
-    return ChatResponse(reply=reply, session_id=session_id)
+
+@app.post("/memory", dependencies=[Depends(require_api_key)])
+def add_memory(req: FactRequest):
+    fact_id = memory.add_fact(req.fact, req.source, req.source_detail, req.confidence, req.refresh_by)
+    return {"id": fact_id}

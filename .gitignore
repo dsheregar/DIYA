@@ -4,12 +4,14 @@ __pycache__/
 .venv/
 venv/
 
-# Model weights and merge artifacts (multi-GB, never commit)
+# Model weights (multi-GB, never commit)
 /models/
-/merged-model/
 *.gguf
 *.safetensors
 *.bin
+
+# Local runtime data (memory DB, etc.)
+/data/
 
 # Env / secrets
 .env

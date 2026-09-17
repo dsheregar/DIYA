@@ -1,36 +1,48 @@
 # Roadmap
 
-## Phase 1 — Pick merge candidates (current step)
-Find 2-3 Llama-3.2-3B-Instruct fine-tunes on Hugging Face that share the
-exact same base architecture and tokenizer (required for weight merging).
-`scripts/find_compatible_models.py` queries the HF API for models tagged
-with a given `base_model`. Fill the results into `merge/mergekit_config.yaml`.
+## Phase 1 — Get real models downloaded (current step)
+Verify the exact HF repo/file names in `agents/registry.yaml` (some are
+marked VERIFY) and download the GGUF files for `mediator`, `memory`, and
+one capability agent (start with `coding` or `data_gathering`) into
+`models/`. Confirm `server/model_runtime.py` loads them and `/health`
+reports them as loaded.
 
-## Phase 2 — Merge
-Run `mergekit-yaml merge/mergekit_config.yaml ./merged-model` (TIES or
-DARE-TIES method) to produce a merged set of weights.
+## Phase 2 — Wire up real routing
+Replace `mediator.py`'s keyword-based `classify_intent` with the
+mediator's own model doing intent classification (structured
+JSON output: which agent(s) to call, in what order). Keep the keyword
+router as a fallback.
 
-## Phase 3 — Convert & quantize
-Use `llama.cpp`'s `convert_hf_to_gguf.py` to turn the merged model into
-GGUF, then `llama-quantize` to produce a Q4_K_M (or similar) quantized
-file small enough for CPU / Raspberry Pi 5 inference.
+## Phase 3 — Fill out the remaining agents
+Download models for `data_analysis`, `creative`, `ethics`, `efficiency`,
+`debate`. Test the governance triage gate end-to-end (an irreversible or
+other-person-touching request should trigger Ethics -> Efficiency ->
+Debate).
 
-## Phase 4 — Local API server
-`server/app.py` (FastAPI + `llama-cpp-python`) loads the quantized GGUF
-and exposes:
-- `GET /health`
-- `POST /chat` — send a message, get a reply (keeps simple in-memory
-  conversation state per session)
+## Phase 4 — Memory quality
+Add embedding-based semantic search to `server/memory.py` (currently
+substring search only) so recall doesn't depend on exact wording.
 
-## Phase 5 — Web UI
-`web/index.html` — a minimal static chat page that calls the API.
-Can be served by any static file host or opened directly.
+## Phase 5 — Vision agent
+Pick and wire up a CPU-friendly detection model (quantized YOLOv8n or
+similar) for person/object detection. Defer person *identification*
+pending a legal review (BIPA and similar).
 
-## Phase 6 — Remote access
-Add API key auth to the server, then expose it beyond localhost (e.g.
-Tailscale, a reverse proxy with HTTPS, or a tunneling service) so other
-apps/devices can reach DIYA remotely.
+## Phase 6 — Web UI + remote access
+Extend `web/` to show which agent answered and surface governance notes
+when present. Add real API-key enforcement and a private access method
+(e.g. Tailscale) before reaching it from outside the home network.
 
 ## Phase 7 — Raspberry Pi 5 deployment
-Move the quantized model + server onto the Pi 5, run `llama-cpp-python`
-built for ARM, and confirm latency/throughput is acceptable.
+Move `models/`, `data/`, and the server onto the Pi 5 (16GB, already
+owned), confirm `llama-cpp-python` runs well on ARM, and measure
+resident/swap latency in practice — this determines whether the
+`MAX_SWAPPED` / `keep_resident` settings in `agents/registry.yaml` need
+tuning for that hardware.
+
+## Deferred / open items
+- Personas layer (travel, home automation, hobby-specific "characters")
+- Expansion nodes (additional Pi boards per persona) — not needed while
+  running on the single owned Pi 5
+- AI HAT+2 / NPU offload — clean upgrade path later, not required now
+- Glasses/AR client — a future device endpoint, not a new architecture

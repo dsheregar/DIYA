@@ -1,44 +1,36 @@
 # DIYA
 Digital Intelligence for Your Abode
 
-DIYA is a personal, offline-capable AI assistant built by merging a few
-small open-weight language models into one, then serving that merged
-model through your own API and web interface.
+DIYA is a personal, offline-capable, **multi-agent** AI assistant. Instead
+of one large model, a mediator routes each request to a small,
+purpose-fit model — coding, data analysis, data gathering, creative,
+vision — with a lightweight governance layer (ethics/efficiency/debate)
+that only kicks in for risky or ambiguous requests. Everything runs
+locally via `llama.cpp`, so DIYA works with no internet connection once
+the agent models are downloaded.
 
-## How it works
-
-1. **Merge** — combine a few same-family open-weight instruct/fine-tuned
-   models (same base architecture + tokenizer) into a single model using
-   [`mergekit`](https://github.com/arcee-ai/mergekit). See [`merge/`](merge/).
-2. **Quantize** — convert the merged model to GGUF and quantize it with
-   `llama.cpp` so it can run on modest hardware (CPU today, a Raspberry
-   Pi 5 later).
-3. **Serve** — run the quantized model locally with `llama-cpp-python`
-   behind a small FastAPI server. See [`server/`](server/).
-4. **Use it** — a minimal web chat UI ([`web/`](web/)) talks to the API,
-   and the same API can be reached remotely (once you add auth/tunneling)
-   from other apps.
-
-Because everything runs from local weights via `llama.cpp`, DIYA works
-with **no internet connection** once the model is downloaded and merged.
-
-## Chosen base model
-
-**Llama 3.2 3B-Instruct** — Meta built the 1B/3B Llama 3.2 models
-specifically for on-device/edge use cases, it's well supported by
-`llama.cpp` (including on ARM/Raspberry Pi), and there's a healthy pool
-of compatible fine-tunes to merge.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design
+and [`docs/ROADMAP.md`](docs/ROADMAP.md) for current status and next
+steps.
 
 ## Project layout
 
 ```
-merge/    mergekit config + instructions for producing the merged model
-server/   FastAPI server that loads the local GGUF model and exposes /chat
+agents/   registry.yaml — the agent list: model, role, resident policy
+server/   FastAPI app: mediator, memory (SQLite fact store), governance
+          triage gate, and the model runtime that loads/swaps GGUF models
 web/      minimal static chat UI that talks to the server
 docs/     architecture notes and roadmap
 ```
 
+## Hardware target
+
+A single Raspberry Pi 5, 16GB RAM (already owned) — no additional
+hardware required. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#hardware)
+for why, and what an AI HAT+2/NPU would add later if wanted.
+
 ## Status
 
-Early scaffold — no model weights are downloaded yet. See
-[`docs/ROADMAP.md`](docs/ROADMAP.md) for the plan and current step.
+Early scaffold — orchestration code is in place, no agent model weights
+are downloaded yet. See [`docs/ROADMAP.md`](docs/ROADMAP.md) Phase 1 for
+the current step.

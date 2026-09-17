@@ -1,0 +1,91 @@
+# DIYA agent registry — add/remove/disable agents by editing this file.
+# `model_id` values marked "VERIFY" are best-guess HF repo names that
+# haven't been confirmed to exist/have the exact GGUF file yet — check
+# on huggingface.co before downloading. Others are known-good official
+# GGUF repos.
+#
+# Agents sharing the same model_id share one loaded model instance at
+# runtime (see server/model_runtime.py) instead of loading duplicates.
+
+layers:
+  infrastructure:
+    - name: mediator
+      role: >
+        Entry point for all requests. Checks memory first, routes to the
+        right capability/governance agent(s), synthesizes the final
+        answer, owns multi-step task planning.
+      model_id: Qwen/Qwen2.5-3B-Instruct-GGUF
+      model_file: qwen2.5-3b-instruct-q4_k_m.gguf
+      keep_resident: true
+
+    - name: memory
+      role: >
+        Read/serve path for stored facts (provenance: source, timestamp,
+        confidence, refresh_by). Does not fetch new information itself.
+      model_id: Qwen/Qwen2.5-1.5B-Instruct-GGUF
+      model_file: qwen2.5-1.5b-instruct-q4_k_m.gguf
+      keep_resident: true
+      # Storage itself is SQLite (server/memory.py), not the model above —
+      # the model is only used if/when memory needs to summarize or judge
+      # relevance of retrieved facts.
+
+  capabilities:
+    - name: coding
+      role: Writing/debugging/testing code across Pi, Linux, Windows, electronics.
+      model_id: Qwen/Qwen2.5-Coder-3B-Instruct-GGUF
+      model_file: qwen2.5-coder-3b-instruct-q4_k_m.gguf
+      keep_resident: false
+
+    - name: data_analysis
+      role: Summarizing data, plotting, trend-spotting, projections.
+      model_id: microsoft/Phi-3-mini-4k-instruct-gguf
+      model_file: Phi-3-mini-4k-instruct-q4.gguf
+      keep_resident: false
+
+    - name: data_gathering
+      role: >
+        The only agent that reaches the internet or local files for facts.
+        Cross-references sources, pushes results into memory with
+        confidence/provenance metadata.
+      model_id: Qwen/Qwen2.5-3B-Instruct-GGUF
+      model_file: qwen2.5-3b-instruct-q4_k_m.gguf
+      keep_resident: false
+
+    - name: creative
+      role: Brainstorming and content planning (itineraries, timelines, drafts).
+      model_id: microsoft/Phi-3-mini-4k-instruct-gguf
+      model_file: Phi-3-mini-4k-instruct-q4.gguf
+      keep_resident: false
+
+    - name: vision
+      role: >
+        Object/scene/person-detection. Not an LLM — a separate CPU-based
+        detection model (e.g. a quantized YOLOv8n/ONNX). No dedicated NPU
+        available yet, so this runs slower than the original AI HAT+2 plan
+        assumed. Person *identification* (vs. detection) is out of scope
+        until a deliberate legal review happens.
+      model_id: null # VERIFY — pick a CPU-friendly ONNX/TFLite detector when we build this agent
+      keep_resident: false
+
+  governance:
+    - name: ethics
+      role: Flags potentially unethical or risky tasks.
+      model_id: Qwen/Qwen2.5-3B-Instruct-GGUF
+      model_file: qwen2.5-3b-instruct-q4_k_m.gguf
+      keep_resident: false
+
+    - name: efficiency
+      role: Advocates for the fastest/most optimal path, as a counterweight to ethics.
+      model_id: Qwen/Qwen2.5-1.5B-Instruct-GGUF
+      model_file: qwen2.5-1.5b-instruct-q4_k_m.gguf
+      keep_resident: true # shares memory's loaded instance
+
+    - name: debate
+      role: >
+        Weighs ethics vs. efficiency, surfaces the tension to the user.
+        Never decides unilaterally.
+      model_id: microsoft/Phi-3-mini-4k-instruct-gguf
+      model_file: Phi-3-mini-4k-instruct-q4.gguf
+      keep_resident: false
+
+  personas: [] # empty for now — deferred, see docs/ROADMAP.md
