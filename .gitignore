@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Model weights and merge artifacts (multi-GB, never commit)
+/models/
+/merged-model/
+*.gguf
+*.safetensors
+*.bin
+
+# Env / secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db
