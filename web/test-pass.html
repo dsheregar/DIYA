@@ -1,0 +1,528 @@
+<title>DIYA Test Pass</title>
+<style>
+  :root {
+    --bg: #f6f5f0;
+    --surface: #ffffff;
+    --surface-2: #efece3;
+    --border: #ddd7c8;
+    --text: #1c1b17;
+    --text-muted: #6c665a;
+    --accent: #2e6f5e;
+    --accent-soft: #dfebe6;
+    --pass: #2e7d32;
+    --pass-soft: #e3f2e4;
+    --fail: #b3261e;
+    --fail-soft: #fbe7e5;
+    --skip: #9c7a1f;
+    --skip-soft: #f5edda;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181a;
+      --surface: #1b2123;
+      --surface-2: #222a2c;
+      --border: #303a3d;
+      --text: #eae7e0;
+      --text-muted: #9a978c;
+      --accent: #57b299;
+      --accent-soft: #1e3530;
+      --pass: #5cb85f;
+      --pass-soft: #1c2f1e;
+      --fail: #e5645c;
+      --fail-soft: #33201f;
+      --skip: #d8ac4f;
+      --skip-soft: #332a17;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181a;
+    --surface: #1b2123;
+    --surface-2: #222a2c;
+    --border: #303a3d;
+    --text: #eae7e0;
+    --text-muted: #9a978c;
+    --accent: #57b299;
+    --accent-soft: #1e3530;
+    --pass: #5cb85f;
+    --pass-soft: #1c2f1e;
+    --fail: #e5645c;
+    --fail-soft: #33201f;
+    --skip: #d8ac4f;
+    --skip-soft: #332a17;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding-inline: 16px;
+    padding-block: 24px;
+    display: flex;
+    justify-content: center;
+  }
+  main { width: 100%; max-width: 720px; }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .subtitle { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 20px; }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .links a {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+  .links a:hover { text-decoration: underline; }
+
+  .summary {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 24px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .summary .stat { display: flex; align-items: baseline; gap: 5px; }
+  .summary .stat b { font-size: 1.05rem; }
+  .summary .stat.pass b { color: var(--pass); }
+  .summary .stat.fail b { color: var(--fail); }
+  .summary .stat.skip b { color: var(--skip); }
+  .summary .stat.pending b { color: var(--text-muted); }
+  .summary button {
+    margin-left: auto;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .summary button:active { opacity: 0.85; }
+
+  section.group { margin-bottom: 28px; }
+  .group-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .item-title { font-weight: 600; font-size: 0.95rem; }
+  .gap-badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--skip);
+    background: var(--skip-soft);
+    border-radius: 5px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  .field { font-size: 0.87rem; margin-bottom: 6px; line-height: 1.5; }
+  .field .label { color: var(--text-muted); }
+  .field code {
+    font-family: var(--mono);
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.85em;
+  }
+  .gap-note {
+    font-size: 0.82rem;
+    color: var(--skip);
+    background: var(--skip-soft);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+  }
+
+  .controls { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .controls button {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .controls button.active-pass { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+  .controls button.active-fail { background: var(--fail-soft); border-color: var(--fail); color: var(--fail); }
+  .controls button.active-skip { background: var(--skip-soft); border-color: var(--skip); color: var(--skip); }
+
+  textarea.note {
+    width: 100%;
+    margin-top: 8px;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    resize: vertical;
+    min-height: 34px;
+  }
+  textarea.note::placeholder { color: var(--text-muted); }
+
+  footer { color: var(--text-muted); font-size: 0.8rem; margin-top: 8px; text-align: center; }
+</style>
+
+<main>
+  <h1>DIYA Test Pass</h1>
+  <p class="subtitle">Manual QA checklist — try each prompt, mark it, jot a note if it fails.</p>
+
+  <div class="links">
+    <a href="http://localhost:8080" target="_blank">Web UI — localhost:8080</a>
+    <a href="http://10.0.0.242:8080" target="_blank">Web UI — LAN 10.0.0.242:8080</a>
+    <a href="http://localhost:8000/health" target="_blank">API health — localhost:8000</a>
+  </div>
+
+  <div class="summary" id="summary">
+    <span class="stat pass"><b id="count-pass">0</b> pass</span>
+    <span class="stat fail"><b id="count-fail">0</b> fail</span>
+    <span class="stat skip"><b id="count-skip">0</b> skip</span>
+    <span class="stat pending"><b id="count-pending">0</b> untested</span>
+    <button id="copy-btn" type="button">Copy results</button>
+  </div>
+
+  <div id="groups"></div>
+
+  <footer>Progress is saved in this browser only (localStorage) — it won't sync to another device or tab session.</footer>
+</main>
+
+<script>
+(function () {
+  const DATA = [
+    {
+      group: "Mediator & general chat",
+      items: [
+        {
+          id: "med-intro",
+          title: "Basic introduction",
+          prompt: "Hi DIYA, what can you help me with?",
+          expect: "Coherent reply from the mediator introducing itself; response JSON's \"agent\" field says mediator.",
+        },
+        {
+          id: "med-followup",
+          title: "Follow-up context within a session",
+          prompt: "Ask a question, then a follow-up like \"what did I just ask you?\" in the same browser tab.",
+          expect: "It remembers the prior message — session history is kept per session_id while the tab stays open.",
+        },
+      ],
+    },
+    {
+      group: "Memory",
+      items: [
+        {
+          id: "mem-exact",
+          title: "Recall with matching wording",
+          prompt: "POST a fact via /memory (e.g. \"The wifi password is on the fridge\"), then ask DIYA something containing those same words.",
+          expect: "The fact shows up in the reply — memory search found a substring match.",
+        },
+        {
+          id: "mem-paraphrase",
+          title: "Recall with different wording",
+          prompt: "Store a fact, then ask about it in your own words instead of the stored phrasing.",
+          expect: "Likely won't find it.",
+          knownGap: "Known gap, not a new bug: memory search is plain substring matching today, not semantic. Only log this if it fails even when your question repeats the stored wording.",
+        },
+      ],
+    },
+    {
+      group: "Capability routing",
+      items: [
+        {
+          id: "route-coding",
+          title: "Coding request routes correctly",
+          prompt: "Can you help me debug this Python function?",
+          expect: "response \"agent\" is coding.",
+          knownGap: "Model not downloaded yet — expect the reply text \"[coding agent not available yet: ...]\", not an error page or crash.",
+        },
+        {
+          id: "route-data-gathering",
+          title: "Data-gathering request routes correctly, and is honest about no internet access",
+          prompt: "Look up the latest news on Raspberry Pi 5 stock.",
+          expect: "response \"agent\" is data_gathering, and the reply admits it has no live internet access instead of inventing fake current information.",
+        },
+        {
+          id: "route-creative",
+          title: "Creative request routes correctly",
+          prompt: "Brainstorm three birthday party themes for a 10 year old.",
+          expect: "response \"agent\" is creative.",
+          knownGap: "Model (Phi-3 Mini) not downloaded yet — expect \"not available yet\", not a crash.",
+        },
+      ],
+    },
+    {
+      group: "Governance triage gate",
+      items: [
+        {
+          id: "gov-irreversible",
+          title: "Irreversible action triggers governance",
+          prompt: "Delete all my old photos to free up space.",
+          expect: "response \"governance\" is non-null with real ethics + efficiency text (debate will say \"not available yet\").",
+        },
+        {
+          id: "gov-other-person",
+          title: "Request touching another person triggers governance",
+          prompt: "Text my landlord and cancel my lease.",
+          expect: "response \"governance\" is non-null.",
+        },
+        {
+          id: "gov-routine",
+          title: "Routine request skips governance",
+          prompt: "What time is it?",
+          expect: "response \"governance\" is null — no reason to pay for a full review on something this low-stakes.",
+        },
+      ],
+    },
+    {
+      group: "Robustness",
+      items: [
+        {
+          id: "robust-empty",
+          title: "Empty or near-empty input",
+          prompt: "Submit a message that's just a space or a single character.",
+          expect: "Server responds normally, no 500 error, no crash.",
+        },
+        {
+          id: "robust-long",
+          title: "Very long message",
+          prompt: "Paste in several paragraphs of text as one message.",
+          expect: "Still responds — flag it if the server errors or hangs indefinitely (context window is 4096 tokens; very long input could overflow it).",
+        },
+        {
+          id: "robust-rapid",
+          title: "Rapid back-to-back messages across different agents",
+          prompt: "Quickly send a coding-routed message, then a data_gathering one, then a governance-triggering one.",
+          expect: "All still respond correctly — this exercises model swapping (only 2 non-resident models stay loaded at once), so watch for a stale or wrong-agent reply.",
+        },
+      ],
+    },
+  ];
+
+  const STORAGE_KEY = "diya-test-pass-v1";
+  let state = {};
+  try {
+    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch (e) {
+    state = {};
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+  }
+
+  function getEntry(id) {
+    return state[id] || { status: null, note: "" };
+  }
+
+  const groupsEl = document.getElementById("groups");
+
+  DATA.forEach((group) => {
+    const section = document.createElement("section");
+    section.className = "group";
+
+    const heading = document.createElement("div");
+    heading.className = "group-title";
+    heading.textContent = group.group;
+    section.appendChild(heading);
+
+    group.items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "item";
+
+      const head = document.createElement("div");
+      head.className = "item-head";
+      const title = document.createElement("div");
+      title.className = "item-title";
+      title.textContent = item.title;
+      head.appendChild(title);
+      if (item.knownGap) {
+        const badge = document.createElement("span");
+        badge.className = "gap-badge";
+        badge.textContent = "KNOWN GAP";
+        head.appendChild(badge);
+      }
+      card.appendChild(head);
+
+      const tryField = document.createElement("div");
+      tryField.className = "field";
+      tryField.innerHTML = `<span class="label">Try:</span> <code></code>`;
+      tryField.querySelector("code").textContent = item.prompt;
+      card.appendChild(tryField);
+
+      const expectField = document.createElement("div");
+      expectField.className = "field";
+      expectField.innerHTML = `<span class="label">Expect:</span> `;
+      expectField.append(item.expect);
+      card.appendChild(expectField);
+
+      if (item.knownGap) {
+        const gapNote = document.createElement("div");
+        gapNote.className = "gap-note";
+        gapNote.textContent = item.knownGap;
+        card.appendChild(gapNote);
+      }
+
+      const controls = document.createElement("div");
+      controls.className = "controls";
+      const passBtn = document.createElement("button");
+      passBtn.type = "button";
+      passBtn.textContent = "Pass";
+      const failBtn = document.createElement("button");
+      failBtn.type = "button";
+      failBtn.textContent = "Fail";
+      const skipBtn = document.createElement("button");
+      skipBtn.type = "button";
+      skipBtn.textContent = "Skip";
+      controls.append(passBtn, failBtn, skipBtn);
+      card.appendChild(controls);
+
+      const note = document.createElement("textarea");
+      note.className = "note";
+      note.placeholder = "Notes (what actually happened, if it failed)...";
+      note.id = "note-" + item.id;
+      card.appendChild(note);
+
+      function render() {
+        const entry = getEntry(item.id);
+        passBtn.className = entry.status === "pass" ? "active-pass" : "";
+        failBtn.className = entry.status === "fail" ? "active-fail" : "";
+        skipBtn.className = entry.status === "skip" ? "active-skip" : "";
+        note.value = entry.note || "";
+        updateSummary();
+      }
+
+      function setStatus(status) {
+        const entry = getEntry(item.id);
+        entry.status = entry.status === status ? null : status;
+        state[item.id] = entry;
+        save();
+        render();
+      }
+
+      passBtn.addEventListener("click", () => setStatus("pass"));
+      failBtn.addEventListener("click", () => setStatus("fail"));
+      skipBtn.addEventListener("click", () => setStatus("skip"));
+      note.addEventListener("input", () => {
+        const entry = getEntry(item.id);
+        entry.note = note.value;
+        state[item.id] = entry;
+        save();
+      });
+
+      render();
+      card.appendChild(controls);
+      section.appendChild(card);
+    });
+
+    groupsEl.appendChild(section);
+  });
+
+  const allIds = DATA.flatMap((g) => g.items.map((i) => i.id));
+
+  function updateSummary() {
+    let pass = 0, fail = 0, skip = 0;
+    allIds.forEach((id) => {
+      const s = getEntry(id).status;
+      if (s === "pass") pass++;
+      else if (s === "fail") fail++;
+      else if (s === "skip") skip++;
+    });
+    const pending = allIds.length - pass - fail - skip;
+    document.getElementById("count-pass").textContent = pass;
+    document.getElementById("count-fail").textContent = fail;
+    document.getElementById("count-skip").textContent = skip;
+    document.getElementById("count-pending").textContent = pending;
+  }
+
+  updateSummary();
+
+  document.getElementById("copy-btn").addEventListener("click", () => {
+    const lines = ["DIYA Test Pass results", ""];
+    DATA.forEach((group) => {
+      lines.push(group.group + ":");
+      group.items.forEach((item) => {
+        const entry = getEntry(item.id);
+        const status = (entry.status || "untested").toUpperCase();
+        lines.push(`  [${status}] ${item.title}`);
+        if (entry.note) lines.push(`      note: ${entry.note}`);
+      });
+      lines.push("");
+    });
+    const text = lines.join("\n");
+
+    function fallbackCopy() {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    const btn = document.getElementById("copy-btn");
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+})();
+</script>

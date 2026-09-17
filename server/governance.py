@@ -6,6 +6,8 @@ pay for a full Ethics -> Efficiency -> Debate pass.
 """
 import re
 
+import identity
+
 IRREVERSIBLE_HINTS = re.compile(
     r"\b(delete|remove permanently|send|post|publish|buy|purchase|transfer|pay|cancel)\b",
     re.IGNORECASE,
@@ -42,7 +44,7 @@ def run_governance(message: str, model_runtime) -> dict:
         cfg = model_runtime.agent_config(role)
         response = llm.create_chat_completion(
             messages=[
-                {"role": "system", "content": cfg["role"]},
+                {"role": "system", "content": identity.system_prompt_for(cfg["role"])},
                 {"role": "user", "content": message},
             ]
         )

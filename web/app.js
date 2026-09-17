@@ -1,4 +1,7 @@
-const API_URL = window.DIYA_API_URL || "http://localhost:8000";
+// Defaults to the same host the page was loaded from, so this works
+// whether opened via localhost or a LAN IP (e.g. from a phone) without
+// any per-device configuration.
+const API_URL = window.DIYA_API_URL || `http://${location.hostname}:8000`;
 
 const log = document.getElementById("log");
 const form = document.getElementById("form");

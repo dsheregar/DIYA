@@ -13,6 +13,9 @@ venv/
 # Local runtime data (memory DB, etc.)
 /data/
 
+# Server run logs
+*.log
+
 # Env / secrets
 .env
 

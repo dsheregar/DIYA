@@ -9,6 +9,7 @@ classify intent instead (see docs/ROADMAP.md).
 import uuid
 
 import governance
+import identity
 
 ROUTES = {
     "coding": ("code", "debug", "script", "function", "bug", "program"),
@@ -65,7 +66,7 @@ class Mediator:
             return f"[{agent_name} agent not available yet: {e}]"
 
         cfg = self.model_runtime.agent_config(agent_name)
-        system_prompt = cfg["role"]
+        system_prompt = identity.system_prompt_for(cfg["role"])
         if recalled:
             facts = "\n".join(f"- {f['fact']} (confidence: {f['confidence']})" for f in recalled)
             system_prompt += f"\n\nRelevant known facts:\n{facts}"
