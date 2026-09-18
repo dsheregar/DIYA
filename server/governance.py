@@ -36,17 +36,13 @@ def run_governance(message: str, model_runtime) -> dict:
     and configured in agents/registry.yaml before this produces real output."""
     result = {"ethics": None, "efficiency": None, "debate": None}
     for role in ("ethics", "efficiency", "debate"):
+        cfg = model_runtime.agent_config(role)
+        messages = [
+            {"role": "system", "content": identity.system_prompt_for(cfg["role"])},
+            {"role": "user", "content": message},
+        ]
         try:
-            llm = model_runtime.get(role)
+            result[role] = model_runtime.generate(role, messages)
         except (ImportError, KeyError, ValueError, FileNotFoundError):
             result[role] = "(model not available yet)"
-            continue
-        cfg = model_runtime.agent_config(role)
-        response = llm.create_chat_completion(
-            messages=[
-                {"role": "system", "content": identity.system_prompt_for(cfg["role"])},
-                {"role": "user", "content": message},
-            ]
-        )
-        result[role] = response["choices"][0]["message"]["content"]
     return result

@@ -5,6 +5,7 @@ keep_resident stay loaded; others are loaded on first use and evicted
 LRU-style once more than MAX_SWAPPED non-resident models are loaded at
 once (keeps RAM bounded on the Pi).
 """
+import threading
 import time
 from pathlib import Path
 
@@ -24,6 +25,12 @@ class ModelRuntime:
         self._loaded: dict[str, object] = {}  # model_id -> Llama instance
         self._last_used: dict[str, float] = {}  # model_id -> timestamp
         self._load_registry(registry_path)
+        # llama-cpp-python's underlying context isn't safe for concurrent
+        # access, and FastAPI's sync endpoints run in a thread pool - this
+        # serializes every load/evict/generate across the whole server.
+        # Fine for a single-user assistant on CPU: only one inference makes
+        # sense at a time anyway on this hardware.
+        self._lock = threading.Lock()
 
     def _load_registry(self, path: Path):
         data = yaml.safe_load(path.read_text())
@@ -49,7 +56,11 @@ class ModelRuntime:
         }
 
     def get(self, agent_name: str):
-        """Return a loaded Llama instance for this agent, loading/evicting as needed."""
+        """Return a loaded Llama instance for this agent, loading/evicting as needed.
+
+        Only safe to call while holding self._lock - use generate() instead
+        unless you already hold it.
+        """
         cfg = self.agent_config(agent_name)
         model_id = cfg.get("model_id")
         if not model_id:
@@ -63,6 +74,14 @@ class ModelRuntime:
         self._loaded[model_id] = self._load(cfg)
         return self._loaded[model_id]
 
+    def generate(self, agent_name: str, messages: list[dict]) -> str:
+        """Load (if needed) and run chat completion for this agent, fully
+        serialized against every other agent call on the server."""
+        with self._lock:
+            llm = self.get(agent_name)
+            response = llm.create_chat_completion(messages=messages)
+            return response["choices"][0]["message"]["content"]
+
     def _evict_if_needed(self, incoming_model_id: str):
         swapped = [m for m in self._loaded if m not in self.resident_ids]
         if len(swapped) < MAX_SWAPPED:
@@ -74,4 +93,4 @@ class ModelRuntime:
         from llama_cpp import Llama
 
         model_path = self.models_dir / cfg["model_file"]
-        return Llama(model_path=str(model_path), n_ctx=4096, verbose=False)
+        return Llama(model_path=str(model_path), n_ctx=8192, verbose=False)

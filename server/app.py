@@ -4,6 +4,8 @@ Wires the Mediator, Memory, and ModelRuntime together and exposes them
 over HTTP. Runs entirely offline once agent models are downloaded per
 agents/registry.yaml.
 """
+from typing import Literal
+
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -46,9 +48,9 @@ class ChatResponse(BaseModel):
 
 class FactRequest(BaseModel):
     fact: str
-    source: str
+    source: Literal["web", "user_stated", "agent_inferred"]
     source_detail: str = ""
-    confidence: str = "medium"
+    confidence: Literal["high", "medium", "low"] = "medium"
     refresh_by: float | None = None
 
 
