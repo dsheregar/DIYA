@@ -13,7 +13,10 @@ IRREVERSIBLE_HINTS = re.compile(
     re.IGNORECASE,
 )
 OTHER_PERSON_HINTS = re.compile(
-    r"\b(email|text|call|message|tell|notify)\s+\w+",
+    # "text" deliberately excluded - "text animation", "text file", "text
+    # editor" etc. are far more common than "text my landlord", making it a
+    # bad trigger word (confirmed false positive during manual testing).
+    r"\b(email|call|message|tell|notify)\s+\w+",
     re.IGNORECASE,
 )
 

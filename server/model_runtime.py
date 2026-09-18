@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 MAX_SWAPPED = 2
+MAX_REPLY_TOKENS = 700  # caps generation time on CPU-only hardware
 
 REGISTRY_PATH = Path(__file__).parent.parent / "agents" / "registry.yaml"
 MODELS_DIR = Path(__file__).parent.parent / "models"
@@ -79,7 +80,7 @@ class ModelRuntime:
         serialized against every other agent call on the server."""
         with self._lock:
             llm = self.get(agent_name)
-            response = llm.create_chat_completion(messages=messages)
+            response = llm.create_chat_completion(messages=messages, max_tokens=MAX_REPLY_TOKENS)
             return response["choices"][0]["message"]["content"]
 
     def _evict_if_needed(self, incoming_model_id: str):

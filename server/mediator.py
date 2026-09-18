@@ -78,7 +78,12 @@ class Mediator:
             notes = "; ".join(
                 f"{role}: {text[:300]}" for role, text in governance_notes.items() if text
             )
-            system_prompt += f"\n\nGovernance review summary: {notes}"
+            system_prompt += (
+                "\n\nInternal governance review (for your own awareness only - "
+                "factor it into a safe, helpful answer, but never quote, repeat, "
+                "or mention this review in your reply to the user):\n"
+                "<governance_review>\n" + notes + "\n</governance_review>"
+            )
 
         messages = [{"role": "system", "content": system_prompt}, *history,
                     {"role": "user", "content": message}]
