@@ -5,11 +5,21 @@ confidence, refresh_by) and serves them on request. Does not fetch new
 information itself — that's data_gathering's job; it pushes results in
 here via add_fact().
 """
+import re
 import sqlite3
 import time
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "data" / "memory.sqlite3"
+
+STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "am", "be", "been",
+    "what", "when", "where", "who", "why", "how", "did", "do", "does",
+    "just", "tell", "you", "your", "yours", "my", "mine", "me", "i",
+    "of", "to", "in", "on", "for", "and", "or", "but", "that", "this",
+    "it", "can", "could", "would", "should", "will", "have", "has",
+    "had", "about", "know", "please", "with", "at", "as", "if", "not",
+}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (
@@ -42,11 +52,18 @@ class Memory:
         return cur.lastrowid
 
     def query(self, text: str, limit: int = 10) -> list[dict]:
-        """Substring search over stored facts. No embeddings yet — see docs/ROADMAP.md."""
+        """Keyword search: matches facts containing any meaningful word from the
+        query. No embeddings yet — see docs/ROADMAP.md."""
+        words = [w for w in re.findall(r"\w+", text.lower()) if w not in STOPWORDS and len(w) > 2]
+        if not words:
+            return []
+
+        conditions = " OR ".join(["fact LIKE ?"] * len(words))
+        params = [f"%{w}%" for w in words]
         rows = self.conn.execute(
-            "SELECT id, fact, source, source_detail, timestamp, confidence, refresh_by "
-            "FROM facts WHERE fact LIKE ? ORDER BY timestamp DESC LIMIT ?",
-            (f"%{text}%", limit),
+            f"SELECT id, fact, source, source_detail, timestamp, confidence, refresh_by "
+            f"FROM facts WHERE {conditions} ORDER BY timestamp DESC LIMIT ?",
+            (*params, limit),
         ).fetchall()
         cols = ["id", "fact", "source", "source_detail", "timestamp", "confidence", "refresh_by"]
         return [dict(zip(cols, row)) for row in rows]
