@@ -52,6 +52,27 @@ h1 {
   background: color-mix(in srgb, CanvasText 8%, Canvas);
 }
 
+.meta {
+  align-self: flex-start;
+  max-width: 85%;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, CanvasText 55%, Canvas);
+  margin-top: -0.25rem;
+}
+
+.meta details {
+  margin-top: 0.25rem;
+}
+
+.meta summary {
+  cursor: pointer;
+}
+
+.meta p {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+}
+
 #form {
   display: flex;
   gap: 0.5rem;

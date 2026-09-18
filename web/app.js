@@ -18,6 +18,31 @@ function appendMessage(role, text) {
   return el;
 }
 
+function appendMeta(agent, governance) {
+  const el = document.createElement("div");
+  el.className = "meta";
+  el.textContent = `agent: ${agent}`;
+
+  if (governance) {
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = "governance triggered";
+    details.appendChild(summary);
+    for (const [role, text] of Object.entries(governance)) {
+      const p = document.createElement("p");
+      p.innerHTML = `<strong>${role}:</strong> `;
+      p.append(text);
+      details.appendChild(p);
+    }
+    el.appendChild(details);
+  } else {
+    el.append(" · governance: skipped");
+  }
+
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const message = input.value.trim();
@@ -38,6 +63,7 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
     sessionId = data.session_id;
     pending.textContent = data.reply;
+    appendMeta(data.agent, data.governance);
   } catch (err) {
     pending.textContent = `Error talking to DIYA: ${err.message}`;
   } finally {
